@@ -1,0 +1,201 @@
+-- CREATE DATABASE IF NOT EXISTS umbrella;
+-- USE umbrella;
+
+CREATE TABLE IF NOT EXISTS umbrella.opcoes (
+  id INT NOT NULL AUTO_INCREMENT,
+  grupo INT NOT NULL,
+  item INT NOT NULL,
+  descricao VARCHAR(45) NOT NULL,
+  created_by VARCHAR(45) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_by VARCHAR(45) NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_by VARCHAR(45) NULL,
+  deleted_at TIMESTAMP NULL,
+  PRIMARY KEY (id))
+;
+
+
+CREATE TABLE IF NOT EXISTS umbrella.usuario (
+  id INT NOT NULL AUTO_INCREMENT,
+  tipo_usuario_id INT NOT NULL,
+  data_nascimento DATE NOT NULL,
+  nome VARCHAR(100) NOT NULL,
+  email VARCHAR(100) NOT NULL,
+  senha VARCHAR(45) NOT NULL,
+  cpf VARCHAR(11) NOT NULL,
+  created_by VARCHAR(45) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_by VARCHAR(45) NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_by VARCHAR(45) NULL,
+  deleted_at TIMESTAMP NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_usuario_tipo_usuario
+    FOREIGN KEY (tipo_usuario_id)
+    REFERENCES umbrella.opcoes (id)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+;
+
+
+CREATE TABLE IF NOT EXISTS umbrella.acesso_tela (
+  id INT NOT NULL AUTO_INCREMENT,
+  nome VARCHAR(45) NOT NULL,
+  url VARCHAR(100) NOT NULL,
+  created_by VARCHAR(45) NULL,
+  created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_by VARCHAR(45) NULL,
+  update_at TIMESTAMP NULL,
+  dateled_by VARCHAR(45) NULL,
+  deleted_at TIMESTAMP NULL,
+  PRIMARY KEY (id))
+;
+
+
+CREATE TABLE IF NOT EXISTS umbrella.pedido (
+  id INT NOT NULL AUTO_INCREMENT,
+  tipo_pedido_id INT NOT NULL,
+  autor_usuario_id INT NOT NULL,
+  prestador_usuario_id INT NOT NULL,
+  status_pedido_id INT NOT NULL,
+  titulo VARCHAR(45) NOT NULL,
+  subtituto VARCHAR(45) NOT NULL,
+  outros_detalhes VARCHAR(2000) NULL,
+  redes_sociais_referencia VARCHAR(150) NULL,
+  created_by VARCHAR(45) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_by VARCHAR(45) NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_by VARCHAR(45) NULL,
+  deleted_at TIMESTAMP NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_pedido_usuario_autor
+    FOREIGN KEY (autor_usuario_id)
+    REFERENCES umbrella.usuario (id)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_pedido_usuario_prestador
+    FOREIGN KEY (prestador_usuario_id)
+    REFERENCES umbrella.usuario (id)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_pedido_opcoes1
+    FOREIGN KEY (status_pedido_id)
+    REFERENCES umbrella.opcoes (id)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_pedido_opcoes2
+    FOREIGN KEY (tipo_pedido_id)
+    REFERENCES umbrella.opcoes (id)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+;
+
+CREATE TABLE IF NOT EXISTS umbrella.cores (
+  id INT NOT NULL AUTO_INCREMENT,
+  pedido_id INT NOT NULL,
+  codigo_hexadecimal VARCHAR(7) NOT NULL,
+  ordem INT NOT NULL,
+  descricao VARCHAR(45) NOT NULL,
+  created_by VARCHAR(45) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_by VARCHAR(45) NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_by VARCHAR(45) NULL,
+  deleted_at TIMESTAMP NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_cores_pedido
+    FOREIGN KEY (pedido_id)
+    REFERENCES umbrella.pedido (id)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+;
+
+CREATE TABLE IF NOT EXISTS umbrella.anexos (
+  id INT NOT NULL AUTO_INCREMENT,
+  tabela VARCHAR(15) NOT NULL,
+  tabela_id INT NOT NULL,
+  nome VARCHAR(45) NOT NULL,
+  checksum VARCHAR(45) NOT NULL,
+  tipo VARCHAR(7) NOT NULL,
+  tamanho INT NOT NULL,
+  created_by VARCHAR(45) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_by VARCHAR(45) NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_by VARCHAR(45) NULL,
+  deleted_at TIMESTAMP NULL,
+  PRIMARY KEY (id))
+;
+
+
+CREATE TABLE IF NOT EXISTS umbrella.cobranca (
+  id INT NOT NULL AUTO_INCREMENT,
+  pedido_id INT NOT NULL,
+  status_cobranca_id INT NOT NULL,
+  forma_pagamento_id INT NOT NULL,
+  descricao VARCHAR(45) NOT NULL,
+  valor DECIMAL(16,2) NOT NULL,
+  created_by VARCHAR(45) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_by VARCHAR(45) NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_by VARCHAR(45) NULL,
+  deleted_at TIMESTAMP NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_cobranca_pedido1
+    FOREIGN KEY (pedido_id)
+    REFERENCES umbrella.pedido (id)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_cobranca_opcoes1
+    FOREIGN KEY (forma_pagamento_id)
+    REFERENCES umbrella.opcoes (id)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_cobranca_opcoes2
+    FOREIGN KEY (status_cobranca_id)
+    REFERENCES umbrella.opcoes (id)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+;
+
+CREATE TABLE IF NOT EXISTS umbrella.tipo_usuario_tem_acesso_tela (
+  acesso_tela_id INT NOT NULL,
+  tipo_usuario_id INT NOT NULL,
+  PRIMARY KEY (acesso_tela_id, tipo_usuario_id),
+  INDEX fk_acesso_tela_has_tipo_usuario_tipo_usuario1_idx (tipo_usuario_id ASC) VISIBLE,
+  INDEX fk_acesso_tela_has_tipo_usuario_acesso_tela1_idx (acesso_tela_id ASC) VISIBLE,
+  CONSTRAINT fk_acesso_tela_has_tipo_usuario_acesso_tela1
+    FOREIGN KEY (acesso_tela_id)
+    REFERENCES umbrella.acesso_tela (id)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_acesso_tela_has_tipo_usuario_tipo_usuario1
+    FOREIGN KEY (tipo_usuario_id)
+    REFERENCES umbrella.opcoes (id)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+;
+
+CREATE TABLE IF NOT EXISTS umbrella.fila_email (
+  id INT NOT NULL AUTO_INCREMENT,
+  titulo VARCHAR(20) NOT NULL,
+  mensagem VARCHAR(200) NOT NULL,
+  email_envio VARCHAR(45) NOT NULL,
+  data_envio TIMESTAMP NOT NULL,
+  tipo_email_id INT NOT NULL,
+  created_by VARCHAR(45) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_by VARCHAR(45) NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_by VARCHAR(45) NULL,
+  deleted_at TIMESTAMP NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_fila_email_opcoes
+    FOREIGN KEY (tipo_email_id)
+    REFERENCES umbrella.opcoes (id)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+;
