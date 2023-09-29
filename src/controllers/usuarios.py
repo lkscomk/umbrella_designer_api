@@ -3,6 +3,7 @@ from flask_restful import Resource
 from src.database.bd import Database
 from src.helpers.validador import validar_obrigatorio, verificar_maioridade
 from src.middlewares.autenticacao import autenticacao
+from src.helpers.gerador import obter_datatime
 
 
 class Usuario(Resource):
@@ -82,22 +83,35 @@ class Usuario(Resource):
         # retorna mensagem de responsta
         return { 'id': usuario, 'mensagem': 'Usuário cadastrado com sucesso'}, 200
 
-    def put(self, id):
+    def put(self, id=None):
         data = request.get_json()
-        titulo = data.get('titulo')
-        autor = data.get('autor')
-        ano = data.get('ano')
+        login = request.headers.get('Login')
+
+        nome = data.get('nome')
+        data_nascimento = data.get('data_nascimento')
+        cpf = data.get('cpf')
+
+        params = { 'nome': nome.upper(), 'data_nascimento': data_nascimento, 'cpf': cpf, 'updated_by': login, 'updated_at': obter_datatime()}
+
+        if id is None:
+            return { "erro": "Id do usuário é Obrigatorio!" }, 500
+
+        if login is None:
+            return { "erro": "Login do usuário é Obrigatorio!" }, 500
+
+        maioridade = verificar_maioridade(data_nascimento)
+        if maioridade is not True:
+            return { "erro": maioridade }, 500
+
+        # inicia conexao com banco de dados
         db = Database()
-        query = "UPDATE livros SET título = ?, autor = ?, ano = ? WHERE id = ?"
-        params = (titulo, autor, ano, id)
-        db.update(query, params)
+        res = db.update('usuario', params, id)
         db.__del__()
-        return {'mensagem': 'Livro atualizado com sucesso'}
+        return { id: res, 'mensagem': 'Usuário atualizado com sucesso'}
 
     def delete(self, id):
         db = Database()
-        query = "DELETE FROM livros WHERE id = ?"
-        params = (id,)
-        db.remove(query, params)
+        login = request.headers.get('Login')
+        a = db.remove('usuario', login, id)
         db.__del__()
-        return {'mensagem': 'Livro removido com sucesso'}
+        return { 'mensagem': 'Usuário excluído com sucesso!'}

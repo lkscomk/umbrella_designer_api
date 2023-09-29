@@ -63,3 +63,9 @@ class Opcoes(Resource):
 
         # retorna mensagem de responsta
         return { 'id': usuario, 'mensagem': 'Usuário cadastrado com sucesso'}, 200
+    def delete(self, grupo=None):
+        db = Database()
+        login = request.headers.get('Login')
+        a = db.remove('opcoes', login, grupo)
+        db.__del__()
+        return { 'id': grupo, 'mensagem': 'Item de opção excluído com sucesso!'}

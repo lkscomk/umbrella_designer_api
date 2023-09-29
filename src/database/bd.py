@@ -2,6 +2,7 @@ import os
 import mysql.connector
 from dotenv import load_dotenv
 from src.helpers.validador import serializar_data
+from src.helpers.gerador import obter_datatime
 import json
 import sqlite3
 
@@ -108,20 +109,38 @@ class Database:
             print(f"Erro ao inserir os dados: {e}")
             return None
 
-    def remove(self, query, params):
+    def remove(self, tabela, usuarioExclusao, id):
         try:
-            self.cur.execute(query, params)
-            self.conn.commit()
-            return self.cur.rowcount  # Retorna o número de linhas afetadas
+            res = self.selectOne(tabela, id)
+
+            if len(res) < 0:
+                return { 'mensagem': 'Registro não encontrado!' }
+            else:
+              query = f"""
+              UPDATE {tabela} SET deleted_by = '{usuarioExclusao}', `deleted_at` = '{obter_datatime()}' WHERE (id = {id});
+              """
+
+              print(query)
+              self.cur.execute(query)
+              self.conn.commit()
+              return self.cur.lastrowid
         except mysql.connector.Error as e:
             print(f"Erro ao remover os dados: {e}")
             return 0
 
-    def update(self, query, params):
+    def update(self, tabela, valores, id):
         try:
-            self.cur.execute(query, params)
+            params = ', '.join([f"{chave} = '{valor}'" for chave, valor in valores.items()])
+
+            query = f"""
+            UPDATE {tabela} SET {params}
+            WHERE id = {id}
+            """
+            print(query)
+
+            self.cur.execute(query)
             self.conn.commit()
-            return self.cur.rowcount  # Retorna o número de linhas afetadas
+            return self.cur.rowcount
         except mysql.connector.Error as e:
             print(f"Erro ao atualizar os dados: {e}")
             return 0
