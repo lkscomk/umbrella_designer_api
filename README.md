@@ -7,7 +7,7 @@
 
 1. Clonar Repositório
 ```
-git clone https://github.com/lkscomk/login-DW3.git
+git clone [https://github.com/lkscomk/login-DW3.git](https://github.com/lkscomk/umbrella_designer_api.git)
 ```
 2.  Criar Maquina Virtual Python
 ```
