@@ -1,8 +1,6 @@
 # Api do projeto
 ### 4º Período - Tecnologia em Sistemas para Internet
 
-Objetivo: criar um tela de login e cadastro simples, usar verificador de senha (mínimo de 6 dígitos, pelo menos 1 maiúsculo, 1 minúsculo, 1 número e 1 caractere especial).
-
 ## Como instalar
 **Pré requisitos:** Python (preferencialmente a ultima versao)
 #### Passo a passo
