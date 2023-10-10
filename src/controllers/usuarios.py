@@ -3,6 +3,7 @@ from flask_restful import Resource
 from src.database.bd import Database
 from src.helpers.validador import validar_obrigatorio, verificar_maioridade
 from src.middlewares.autenticacao import autenticacao
+from src.helpers.gerador import obter_datatime
 
 
 class Usuario(Resource):
@@ -11,26 +12,42 @@ class Usuario(Resource):
         db = Database()
 
         if id is None:
-            tipoUsuarioId = request.args.get('tipoUsuarioId[]')
-            dataNascimento = request.args.get('dataNascimento')
+            tipos = request.args.getlist('tipo[]')
+            id = request.args.get('id')
             nome = request.args.get('nome')
             email = request.args.get('email')
             cpf = request.args.get('cpf')
 
-            params = "WHERE deleted_by is null"
-            params += f" AND tipo_usuario_id in {tipoUsuarioId}" if tipoUsuarioId else ''
-            params += f" AND data_nascimento = '{dataNascimento}'" if dataNascimento else ''
-            params += f" AND nome LIKE '%{nome}%'" if nome else ''
-            params += f" AND email  LIKE '%{email}%'" if email else ''
-            params += f" AND cpf = '{cpf}'" if cpf else ''
+            params = """
+            SELECT usuario.id
+            	 , usuario.tipo_usuario_id
+                 , opcoes.descricao as tipo
+                 , usuario.data_nascimento
+                 , usuario.nome
+                 , usuario.email
+                 , usuario.cpf
+                 , usuario.created_at
+             FROM umbrella.usuario
+            INNER
+             JOIN umbrella.opcoes as opcoes
+               ON opcoes.deleted_by is null
+              AND opcoes.grupo = 2 -- TIPOS DE USUARIOS
+              AND opcoes.item = usuario.tipo_usuario_id
+            WHERE usuario.deleted_by is null
+            """
 
-            resultado = db.selectAll('usuario', params)
+            params += f" AND usuario.id in ({id})" if id else ''
+            params += f" AND usuario.tipo_usuario_id in ({', '.join(tipos)})" if tipos else ''
+            params += f" AND usuario.nome LIKE '%{nome}%'" if nome else ''
+            params += f" AND usuario.email LIKE '%{email}%'" if email else ''
+            params += f" AND usuario.cpf LIKE '%{cpf}%'" if cpf else ''
+
+            resultado = db.sql(params)
         else:
             resultado = db.selectOne('usuario', id)
 
         db.__del__()
         return resultado
-
     def post(self):
         # pegar informacoes enviadas no body da requisição
         data = request.get_json()
@@ -82,22 +99,40 @@ class Usuario(Resource):
         # retorna mensagem de responsta
         return { 'id': usuario, 'mensagem': 'Usuário cadastrado com sucesso'}, 200
 
+    @autenticacao
     def put(self, id):
-        data = request.get_json()
-        titulo = data.get('titulo')
-        autor = data.get('autor')
-        ano = data.get('ano')
         db = Database()
-        query = "UPDATE livros SET título = ?, autor = ?, ano = ? WHERE id = ?"
-        params = (titulo, autor, ano, id)
-        db.update(query, params)
-        db.__del__()
-        return {'mensagem': 'Livro atualizado com sucesso'}
+        data = request.get_json()
+        login = request.headers.get('Login')
 
+        nome = data.get('nome')
+        data_nascimento = data.get('data_nascimento')
+        cpf = data.get('cpf')
+
+        params = { 'nome': nome.upper(), 'data_nascimento': data_nascimento, 'cpf': cpf, 'updated_by': login, 'updated_at': obter_datatime()}
+
+        if id is None:
+            return { "erro": "Id do usuário é Obrigatorio!" }, 500
+
+        if login is None:
+            return { "erro": "Login do usuário é Obrigatorio!" }, 500
+
+        maioridade = verificar_maioridade(data_nascimento)
+        if maioridade is not True:
+            return { "erro": maioridade }, 500
+
+        resultado = db.selectOne('usuario', id)
+        if not resultado:
+            return {"erro": 'Usuário não encontrado.'}
+
+        res = db.update('usuario', params, id)
+        db.__del__()
+        return { id: res, 'mensagem': 'Usuário atualizado com sucesso'}
+
+    @autenticacao
     def delete(self, id):
         db = Database()
-        query = "DELETE FROM livros WHERE id = ?"
-        params = (id,)
-        db.remove(query, params)
+        login = request.headers.get('Login')
+        a = db.remove('usuario', login, id)
         db.__del__()
-        return {'mensagem': 'Livro removido com sucesso'}
+        return { 'mensagem': 'Usuário excluído com sucesso!'}
