@@ -87,9 +87,21 @@ class Database:
 
     def sql(self, query):
         try:
+            print(query)
             self.cur.execute(query)
-            self.conn.commit()
-            return self.cur.rowcount  # Retorna o número de linhas afetadas
+            rows = self.cur.fetchall()
+            column_names = [desc[0] for desc in self.cur.description]
+
+            resultados = []
+            for row in rows:
+                resultado_dict = {}
+                for i, value in enumerate(row):
+                    resultado_dict[column_names[i]] = value
+                resultados.append(resultado_dict)
+
+            json_string = json.dumps(resultados, default=serializar_data)
+
+            return json.loads(json_string)
         except mysql.connector.Error as e:
             print(f"Erro ao rodar código: {e}")
             return 0

@@ -12,26 +12,42 @@ class Usuario(Resource):
         db = Database()
 
         if id is None:
-            tipoUsuarioId = request.args.get('tipoUsuarioId[]')
-            dataNascimento = request.args.get('dataNascimento')
+            tipos = request.args.getlist('tipo[]')
+            id = request.args.get('id')
             nome = request.args.get('nome')
             email = request.args.get('email')
             cpf = request.args.get('cpf')
 
-            params = "WHERE deleted_by is null"
-            params += f" AND tipo_usuario_id in {tipoUsuarioId}" if tipoUsuarioId else ''
-            params += f" AND data_nascimento = '{dataNascimento}'" if dataNascimento else ''
-            params += f" AND nome LIKE '%{nome}%'" if nome else ''
-            params += f" AND email  LIKE '%{email}%'" if email else ''
-            params += f" AND cpf = '{cpf}'" if cpf else ''
+            params = """
+            SELECT usuario.id
+            	 , usuario.tipo_usuario_id
+                 , opcoes.descricao as tipo
+                 , usuario.data_nascimento
+                 , usuario.nome
+                 , usuario.email
+                 , usuario.cpf
+                 , usuario.created_at
+             FROM umbrella.usuario
+            INNER
+             JOIN umbrella.opcoes as opcoes
+               ON opcoes.deleted_by is null
+              AND opcoes.grupo = 2 -- TIPOS DE USUARIOS
+              AND opcoes.item = usuario.tipo_usuario_id
+            WHERE usuario.deleted_by is null
+            """
 
-            resultado = db.selectAll('usuario', params)
+            params += f" AND usuario.id in ({id})" if id else ''
+            params += f" AND usuario.tipo_usuario_id in ({', '.join(tipos)})" if tipos else ''
+            params += f" AND usuario.nome LIKE '%{nome}%'" if nome else ''
+            params += f" AND usuario.email LIKE '%{email}%'" if email else ''
+            params += f" AND usuario.cpf LIKE '%{cpf}%'" if cpf else ''
+
+            resultado = db.sql(params)
         else:
             resultado = db.selectOne('usuario', id)
 
         db.__del__()
         return resultado
-
     def post(self):
         # pegar informacoes enviadas no body da requisição
         data = request.get_json()
@@ -83,7 +99,9 @@ class Usuario(Resource):
         # retorna mensagem de responsta
         return { 'id': usuario, 'mensagem': 'Usuário cadastrado com sucesso'}, 200
 
-    def put(self, id=None):
+    @autenticacao
+    def put(self, id):
+        db = Database()
         data = request.get_json()
         login = request.headers.get('Login')
 
@@ -103,12 +121,15 @@ class Usuario(Resource):
         if maioridade is not True:
             return { "erro": maioridade }, 500
 
-        # inicia conexao com banco de dados
-        db = Database()
+        resultado = db.selectOne('usuario', id)
+        if not resultado:
+            return {"erro": 'Usuário não encontrado.'}
+
         res = db.update('usuario', params, id)
         db.__del__()
         return { id: res, 'mensagem': 'Usuário atualizado com sucesso'}
 
+    @autenticacao
     def delete(self, id):
         db = Database()
         login = request.headers.get('Login')
