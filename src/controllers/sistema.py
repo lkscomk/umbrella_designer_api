@@ -1,14 +1,107 @@
 from flask import Blueprint, request
 from src.database.bd import Database
+import jwt
+from datetime import datetime, timedelta
+from src.helpers.validador import validar_obrigatorio
+from src.middlewares.autenticacao import autenticacao
 
-sistema_bp = Blueprint('sistema', __name__)
+sistema = Blueprint('sistema', __name__)
 
-@sistema_bp.route('/')
-def informacoesSistema():
+# variaveis
+endPoint = '/api/sistema/'
+expiration_time = datetime.utcnow() + timedelta(hours=1)
+
+
+@sistema.route(f"{endPoint}", methods=['GET'])
+def statusSistema():
     return "Informações do Sistema"
 
-@sistema_bp.route('/api/sistema/opcoes/<int:grupo>')
-def opcoes(grupo=None):
+@sistema.route(f"{endPoint}/login", methods=['POST'])
+def login():
+    try:
+      data = request.get_json()
+
+      resultado = validar_obrigatorio(data, ['email', 'senha'])
+      if resultado is not True:
+          return resultado, 500
+
+      email = data.get("email")
+      senha = data.get("senha")
+
+      params = "WHERE deleted_by is null"
+      params += f" AND upper(email) = upper('{email}')" if email else ''
+      params += f" AND senha = '{senha}'" if senha else ''
+
+      db = Database()
+      resultado = db.selectAll('usuario', params)
+
+      if len(resultado) == 0:
+        return {"erro": "Usuário não encontrado ou senha incorreta."}, 200
+
+      usuario = resultado[0]
+
+      payload = {'email': email, 'exp': expiration_time}
+
+      # Gerando o token
+      token = jwt.encode(payload, 'teste', algorithm='HS256')
+      return { "mensagem": "Usuário logado com sucesso!",
+               "email": email,
+               "nome": usuario["nome"],
+               "login": f"{usuario['id']}-{usuario['nome'].split(' ')[0]}",
+               "id": usuario['id'],
+               "token": token
+             }, 200
+    except Exception as e:
+            return {"erro": f"Erro ao processar a solicitação: {str(e)}"}, 500
+
+@autenticacao
+@sistema.route(f"{endPoint}/acessos_tela/<int:id>", methods=['GET'])
+def listarAcessos(id=None):
+    db = Database()
+
+    if id is None:
+        return {"erro": 'Id do usuário não informado.'}
+
+    resultado = db.selectOne('usuario', id)
+    if not resultado:
+        return {"erro": 'Usuário não encontrado.'}
+
+
+    sql = f"""
+        SELECT usuario.nome
+                , usuario.tipo_usuario_id
+                , acesso.nome
+                , acesso.url
+            FROM umbrella.usuario as usuario
+
+            INNER
+            JOIN umbrella.opcoes as opcoes
+            ON opcoes.deleted_at is null
+            AND opcoes.grupo = 2
+            AND opcoes.item = usuario.tipo_usuario_id
+
+            INNER
+            JOIN umbrella.tipo_usuario_tem_acesso_tela as acesso_tela
+            ON acesso_tela.deleted_at is null
+            AND usuario.tipo_usuario_id = acesso_tela.tipo_usuario_id
+
+            INNER
+            JOIN umbrella.acesso_tela as acesso
+            ON usuario.deleted_at is null
+            AND acesso.id = acesso_tela.acesso_tela_id
+
+            WHERE usuario.deleted_at is null
+            AND usuario.id = {id}
+    """
+
+    res = db.sql(sql)
+
+    db.__del__()
+    return res
+
+
+@sistema.route(f"{endPoint}/opcoes/<int:grupo>", methods=['GET'])
+def listarDropdown(grupo=None):
     db = Database()
     if grupo is None:
         return { 'erro': 'Grupo obrigatório'}, 200

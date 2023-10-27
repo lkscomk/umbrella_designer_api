@@ -1,25 +1,21 @@
 from flask import Flask
-from flask_restful import Api
 from flask_cors import CORS
-from src.controllers.usuarios import Usuario
-from src.controllers.opcoes import Opcoes
-from src.controllers.login import Login
-from src.controllers.acessos import Acessos
-from src.controllers.sistema import sistema_bp
+from src.controllers.usuarios import usuario
+from src.controllers.sistema import sistema
+from src.controllers.pedido import pedido
+from src.controllers.opcoes import opcoes
+from src.controllers.anexos import anexos
 
 def create_app():
     app = Flask(__name__)
 
     CORS(app, resources={r"/api/*": {"origins": "*", "supports_credentials": True}})
 
-    api = Api(app)
-
-    api.add_resource(Login, '/api/login')
-    api.add_resource(Opcoes, '/api/opcoes/<int:id>', '/api/opcoes')
-    api.add_resource(Usuario, '/api/usuario/<int:id>', '/api/usuario')
-    api.add_resource(Acessos, '/api/acessos_tela/<int:id>')
-
-    app.register_blueprint(sistema_bp)
+    app.register_blueprint(usuario)
+    app.register_blueprint(anexos)
+    app.register_blueprint(sistema)
+    app.register_blueprint(pedido)
+    app.register_blueprint(opcoes)
 
     return app
 
