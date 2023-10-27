@@ -1,5 +1,4 @@
 import random
-import string
 import base64
 from datetime import datetime
 
@@ -13,7 +12,4 @@ def obter_datatime():
     data_e_hora_formatadas = agora.strftime(formato)
     return data_e_hora_formatadas
 
-def gerador_checksum(tamanho=20):
-    caracteres = string.ascii_letters + string.digits  # Letras maiúsculas, minúsculas e dígitos
-    return ''.join(random.choice(caracteres) for _ in range(tamanho))
 

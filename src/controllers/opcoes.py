@@ -11,7 +11,6 @@ endPoint = '/api/opcoes'
 @opcoes.route(f"{endPoint}", methods=['GET'])
 @autenticacao
 def listar(id=None):
-    db = Database()
     descricao = request.args.get('descricao')
     grupo = request.args.get('grupo')
 
@@ -32,6 +31,7 @@ def listar(id=None):
         WHERE opcoes.deleted_by is null
     """
 
+    db = Database()
     if id is None:
         sql += f" AND opcoes.grupo = {grupo}" if grupo else ''
         sql += f" AND opcoes.descricao LIKE '%{descricao}%'" if descricao else ''
