@@ -12,3 +12,4 @@ def obter_datatime():
     data_e_hora_formatadas = agora.strftime(formato)
     return data_e_hora_formatadas
 
+

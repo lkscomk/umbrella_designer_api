@@ -17,7 +17,7 @@ def verificar_maioridade(data_nascimento):
     data_nascimento = datetime.strptime(data_nascimento, '%Y-%m-%d')
     data_atual = datetime.now()
     idade = data_atual.year - data_nascimento.year - ((data_atual.month, data_atual.day) < (data_nascimento.month, data_nascimento.day))
-
+    print('aaaaa', type(idade))
     if idade < 18:
         return "O usuário deve ser maior de 18 anos."
     else:
