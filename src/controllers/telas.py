@@ -4,53 +4,58 @@ from src.helpers.validador import validar_obrigatorio, verificar_maioridade
 from src.middlewares.autenticacao import autenticacao
 from src.helpers.gerador import obter_datatime
 
-usuario = Blueprint('usuario', __name__)
+telas = Blueprint('telas', __name__)
 
-# variaveis
-endPoint = '/api/usuario'
+# variaveiss
+endPoint = '/api/telas'
 
 @autenticacao
-@usuario.route(f"{endPoint}", methods=['GET'])
+@telas.route(f"{endPoint}", methods=['GET'])
 def listar():
     db = Database()
 
-    tipos = request.args.getlist('tipo[]')
-    id = request.args.get('id')
     nome = request.args.get('nome')
-    email = request.args.get('email')
-    cpf = request.args.get('cpf')
 
-    params = """
-    SELECT usuario.id
-            , usuario.tipo_usuario_id
-            , opcoes.descricao as tipo
-            , usuario.data_nascimento
-            , usuario.nome
-            , usuario.email
-            , usuario.cpf
-            , usuario.created_at
-        FROM usuario
-    INNER
-        JOIN opcoes as opcoes
-        ON opcoes.deleted_by is null
-        AND opcoes.grupo = 2 -- TIPOS DE USUARIOS
-        AND opcoes.item = usuario.tipo_usuario_id
-    WHERE usuario.deleted_by is null
-    """
+    params = "WHERE deleted_at is null"
+    params += f" AND nome LIKE '%{nome}%'" if nome else ''
 
-    params += f" AND usuario.id in ({id})" if id else ''
-    params += f" AND usuario.tipo_usuario_id in ({', '.join(tipos)})" if tipos else ''
-    params += f" AND usuario.nome LIKE '%{nome}%'" if nome else ''
-    params += f" AND usuario.email LIKE '%{email}%'" if email else ''
-    params += f" AND usuario.cpf LIKE '%{cpf}%'" if cpf else ''
-
-    resultado = db.sql(params)
+    resultado = db.selectAll('acesso_tela', params)
 
     db.__del__()
     return resultado
 
 @autenticacao
-@usuario.route(f"{endPoint}/<int:id>", methods=['GET'])
+@telas.route(f"{endPoint}-acessos/<int:telaId>", methods=['GET'])
+def listarAcessos(telaId):
+    db = Database()
+
+    descricao = request.args.get('descricao')
+
+    query = f"""
+        SELECT acesso.id
+             , opcoes.descricao
+        	 , acesso.created_at
+             , acesso.created_by
+        FROM tipo_usuario_tem_acesso_tela as acesso
+
+        INNER
+        JOIN opcoes as opcoes
+           ON opcoes.grupo = 2
+          AND opcoes.item = acesso.tipo_usuario_id
+
+
+        WHERE acesso.deleted_at is null
+          AND acesso.acesso_tela_id = {telaId}"""
+    query += f" AND opcoes.descricao LIKE '%{descricao}%'" if descricao else ''
+
+    resultado = db.sql(query)
+
+    db.__del__()
+    return resultado
+
+
+@autenticacao
+@telas.route(f"{endPoint}/<int:id>", methods=['GET'])
 def exibir(id):
     db = Database()
 
@@ -59,7 +64,7 @@ def exibir(id):
     db.__del__()
     return resultado
 
-@usuario.route(f"{endPoint}", methods=['POST'])
+@telas.route(f"{endPoint}", methods=['POST'])
 def inserir():
     # pegar informacoes enviadas no body da requisição
     data = request.get_json()
@@ -112,7 +117,7 @@ def inserir():
     return { 'id': usuario, 'mensagem': 'Usuário cadastrado com sucesso'}, 200
 
 @autenticacao
-@usuario.route(f"{endPoint}/<int:id>", methods=['PUT'])
+@telas.route(f"{endPoint}/<int:id>", methods=['PUT'])
 def editar(id):
     db = Database()
     data = request.get_json()
@@ -144,7 +149,7 @@ def editar(id):
     return { 'id': id, 'mensagem': 'Usuário atualizado com sucesso' }
 
 @autenticacao
-@usuario.route(f"{endPoint}/<int:id>", methods=['DELETE'])
+@telas.route(f"{endPoint}/<int:id>", methods=['DELETE'])
 def excluir(id):
     db = Database()
     login = request.headers.get('Login')

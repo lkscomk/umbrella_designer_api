@@ -5,6 +5,7 @@ from src.controllers.sistema import sistema
 from src.controllers.pedido import pedido
 from src.controllers.opcoes import opcoes
 from src.controllers.anexos import anexos
+from src.controllers.telas import telas
 from src.controllers.portfolio import portfolio
 
 def create_app():
@@ -14,6 +15,7 @@ def create_app():
 
     app.register_blueprint(usuario)
     app.register_blueprint(anexos)
+    app.register_blueprint(telas)
     app.register_blueprint(sistema)
     app.register_blueprint(portfolio)
     app.register_blueprint(pedido)

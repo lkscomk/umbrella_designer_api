@@ -68,30 +68,23 @@ def listarAcessos(id=None):
 
 
     sql = f"""
-        SELECT usuario.nome
-                , usuario.tipo_usuario_id
-                , acesso.nome
-                , acesso.url
-            FROM umbrella.usuario as usuario
+        SELECT tela.nome
+             , tela.url
+             , usuario.tipo_usuario_id
+        FROM tipo_usuario_tem_acesso_tela as acesso
 
-            INNER
-            JOIN umbrella.opcoes as opcoes
-            ON opcoes.deleted_at is null
-            AND opcoes.grupo = 2
-            AND opcoes.item = usuario.tipo_usuario_id
+        INNER
+         JOIN usuario as usuario
+           ON usuario.tipo_usuario_id = acesso.tipo_usuario_id
 
-            INNER
-            JOIN umbrella.tipo_usuario_tem_acesso_tela as acesso_tela
-            ON acesso_tela.deleted_at is null
-            AND usuario.tipo_usuario_id = acesso_tela.tipo_usuario_id
+        INNER
+         JOIN acesso_tela as tela
+           ON tela.id = acesso.acesso_tela_id
 
-            INNER
-            JOIN umbrella.acesso_tela as acesso
-            ON usuario.deleted_at is null
-            AND acesso.id = acesso_tela.acesso_tela_id
-
-            WHERE usuario.deleted_at is null
-            AND usuario.id = {id}
+        WHERE acesso.deleted_at is null
+          AND usuario.id =  {id}
+        ORDER
+           BY tela.id
     """
 
     res = db.sql(sql)
