@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request,jsonify
 from src.database.bd import Database
 import jwt
 from datetime import datetime, timedelta
@@ -112,3 +112,16 @@ def listarDropdown(grupo=None):
 
     db.__del__()
     return resultado
+
+@sistema.route('/informacoes_tabelas', methods=['GET'])
+def obter_informacoes_tabelas():
+  try:
+    db = Database()
+
+    # Obtenha uma lista de todas as tabelas no banco de dados
+    res = db.obter_informacoes_tabelas()
+    db.__del__()
+    return jsonify(res)
+
+  except Exception as e:
+    return jsonify({"error": str(e)})

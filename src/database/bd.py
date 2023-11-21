@@ -10,8 +10,12 @@ class Database:
     def __init__(self):
         self.conn = None
         self.cur = None
-        # self.connect_producao()
-        self.connect_dev()
+        load_dotenv()
+        self.ambiente = 'dev'
+        if (self.ambiente == 'dev'):
+            self.connect_dev()
+        else:
+            self.connect_producao()
 
     def connect_producao(self):
         banco = f'{os.path.dirname(os.path.abspath(__file__))}/banco.db'
@@ -156,6 +160,61 @@ class Database:
         except mysql.connector.Error as e:
             print(f"Erro ao atualizar os dados: {e}")
             return 0
+
+    def obter_informacoes_tabelas(self):
+        try:
+            if (self.ambiente == 'dev'):
+                # Obter nomes das tabelas
+                self.cur.execute("SHOW TABLES;")
+                tabelas = [tabela[0] for tabela in self.cur.fetchall()]
+
+                # Crie um dicionário para armazenar as informações
+                informacoes = {}
+                for tabela in tabelas:
+                    # Obter informações sobre colunas
+                    self.cur.execute(f"DESCRIBE {tabela};")
+                    colunas = [coluna[0] for coluna in self.cur.fetchall()]
+
+                    # Obter quantidade de registros
+                    self.cur.execute(f"SELECT COUNT(*) FROM {tabela};")
+                    quantidade_registros = self.cur.fetchone()[0]
+
+                    # Obter todos os registros
+                    res = self.selectAll(tabela)
+
+                    informacoes[tabela] = {
+                        "colunas": colunas,
+                        "quantidade_registros": quantidade_registros,
+                        "registros": res
+                    }
+
+                return informacoes
+            else:
+                self.cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                tabelas = self.cur.fetchall()
+                tabelas = [tabela[0] for tabela in tabelas]
+
+                # Crie um dicionário para armazenar as informações
+                informacoes = {}
+                for tabela in tabelas:
+                    self.cur.execute(f"PRAGMA table_info({tabela});")
+                    colunas = self.cur.fetchall()
+                    coluna_nomes = [coluna[1] for coluna in colunas]
+
+                    self.cur.execute(f"SELECT COUNT(*) FROM {tabela};")
+                    quantidade_registros = self.cur.fetchone()[0]
+
+                    res = self.selectAll(tabela)
+
+                    informacoes[tabela] = {
+                        "colunas": coluna_nomes,
+                        "quantidade_registros": quantidade_registros,
+                        "registros": res
+                    }
+
+                    return informacoes
+        except Exception as e:
+            return {"error": str(e)}
 
     def close(self):
         self.conn.close()
