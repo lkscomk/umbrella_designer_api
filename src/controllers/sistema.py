@@ -1,6 +1,7 @@
 from flask import Blueprint, request,jsonify
 from src.database.bd import Database
 import jwt
+import requests
 from datetime import datetime, timedelta
 from src.helpers.validador import validar_obrigatorio
 from src.middlewares.autenticacao import autenticacao
@@ -125,3 +126,13 @@ def obter_informacoes_tabelas():
 
   except Exception as e:
     return jsonify({"error": str(e)})
+
+@sistema.route('/backup_producao', methods=['GET'])
+def obter_backup_producao():
+    import requests
+
+    url = "https://umbrella.lukasrocha.repl.co/informacoes_tabelas"
+
+    response = requests.request("GET", url)
+
+    return 'response'
