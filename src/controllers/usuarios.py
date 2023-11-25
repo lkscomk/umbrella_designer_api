@@ -29,9 +29,9 @@ def listar():
             , usuario.email
             , usuario.cpf
             , usuario.created_at
-        FROM umbrella.usuario
+        FROM usuario
     INNER
-        JOIN umbrella.opcoes as opcoes
+        JOIN opcoes as opcoes
         ON opcoes.deleted_by is null
         AND opcoes.grupo = 2 -- TIPOS DE USUARIOS
         AND opcoes.item = usuario.tipo_usuario_id

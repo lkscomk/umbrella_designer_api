@@ -73,21 +73,21 @@ def listarAcessos(id=None):
                 , usuario.tipo_usuario_id
                 , acesso.nome
                 , acesso.url
-            FROM umbrella.usuario as usuario
+            FROM usuario as usuario
 
             INNER
-            JOIN umbrella.opcoes as opcoes
+            JOIN opcoes as opcoes
             ON opcoes.deleted_at is null
             AND opcoes.grupo = 2
             AND opcoes.item = usuario.tipo_usuario_id
 
             INNER
-            JOIN umbrella.tipo_usuario_tem_acesso_tela as acesso_tela
+            JOIN tipo_usuario_tem_acesso_tela as acesso_tela
             ON acesso_tela.deleted_at is null
             AND usuario.tipo_usuario_id = acesso_tela.tipo_usuario_id
 
             INNER
-            JOIN umbrella.acesso_tela as acesso
+            JOIN acesso_tela as acesso
             ON usuario.deleted_at is null
             AND acesso.id = acesso_tela.acesso_tela_id
 
@@ -126,13 +126,3 @@ def obter_informacoes_tabelas():
 
   except Exception as e:
     return jsonify({"error": str(e)})
-
-@sistema.route('/backup_producao', methods=['GET'])
-def obter_backup_producao():
-    import requests
-
-    url = "https://umbrella.lukasrocha.repl.co/informacoes_tabelas"
-
-    response = requests.request("GET", url)
-
-    return 'response'

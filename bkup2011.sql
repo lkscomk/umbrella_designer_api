@@ -350,3 +350,10 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2023-11-20 16:08:29
+
+ALTER TABLE `umbrella`.`acesso_tela`
+CHANGE COLUMN `deleted_by` `deleted_by` VARCHAR(45) NULL DEFAULT NULL ;
+
+
+ALTER TABLE `umbrella`.`acesso_tela`
+CHANGE COLUMN `update_at` `updated_at` TIMESTAMP NULL DEFAULT NULL ;

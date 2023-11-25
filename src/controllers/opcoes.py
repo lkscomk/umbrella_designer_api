@@ -22,9 +22,9 @@ def listar(id=None):
                 , opcoes.descricao
                 , opcoes.created_by
                 , opcoes.created_at
-            FROM umbrella.opcoes AS opcoes
+            FROM opcoes AS opcoes
         INNER
-            JOIN umbrella.opcoes AS opcoes2
+            JOIN opcoes AS opcoes2
             ON opcoes2.deleted_at IS null
             AND opcoes2.grupo = 1
             AND opcoes2.item = opcoes.grupo

@@ -6,6 +6,7 @@ from src.controllers.pedido import pedido
 from src.controllers.opcoes import opcoes
 from src.controllers.anexos import anexos
 from src.controllers.portfolio import portfolio
+from src.controllers.acessos import acessos
 
 def create_app():
     app = Flask(__name__)
@@ -18,6 +19,7 @@ def create_app():
     app.register_blueprint(portfolio)
     app.register_blueprint(pedido)
     app.register_blueprint(opcoes)
+    app.register_blueprint(acessos)
 
     return app
 
